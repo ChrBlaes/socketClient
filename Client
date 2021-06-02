@@ -1,4 +1,6 @@
+using Newtonsoft.Json;
 using System;
+using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
@@ -6,6 +8,13 @@ using System.Threading;
 
 namespace SocketClient
 {
+    
+    class Stock
+    {
+        public string name { get; set; }
+        public double bidPrice { get; set; }
+        public double askPrice { get; set; }
+    }
     class Program
     {
         private static Socket ClientSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
@@ -23,15 +32,31 @@ namespace SocketClient
                 Thread.Sleep(500);
                 byte[] buffer = Encoding.ASCII.GetBytes("Get stockprice");
                 ClientSocket.Send(buffer);
+                
 
                 byte[] receivedBuf = new byte[1024];
                 int rec = ClientSocket.Receive(receivedBuf);
                 byte[] data = new byte[rec];
                 Array.Copy(receivedBuf, data, rec);
-                Console.WriteLine("Received: " + Encoding.ASCII.GetString(data));
+                string bytesAsString = Encoding.UTF8.GetString(data);
+                
+                List<Stock> stocks = JsonConvert.DeserializeObject<List<Stock>>(bytesAsString);
+
+                Console.Clear();
+                foreach (var item in stocks)
+                {
+
+                    Console.WriteLine("Company Name: " + item.name + " | " + " AskPrice: " + Math.Round(item.askPrice, 2) + " | " + " BidPrice :" + Math.Round(item.bidPrice, 2) + " | " + "\n");
+                    Console.WriteLine("--------------------------------------------------------------------------------------------------");
+                  
+                }
+                
 
             }
         }
+        
+       
+
         private static void LoopConnect()
         {
             int attempts = 0;
